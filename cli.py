@@ -17,7 +17,7 @@ def main_menu():
 
 def run_cli():
     task_manager = TaskManager()
-    task_storage = TaskStorage()
+    # task_storage = TaskStorage()
     while True:
         main_menu()
         choice = input("Please select an option (1-5): ")
@@ -25,7 +25,7 @@ def run_cli():
             print("You selected Option 1.")
             title = input("Enter task title: ")
             description = input("Enter task description: ")
-            due_date = input("Enter task due date (YYYY-MM-DD): ")
+            due_date = input("Enter task due date: ")
             category = input("Enter task category (optional): ")
             priority = input("Enter task priority (optional): ")
             task_manager.add_task(
@@ -109,10 +109,14 @@ def run_cli():
 
         elif choice == "7":
             print("You selected Option 7.")
+            filename = input("Enter the filename to save tasks to (default is 'tasks.json'): ")
+            task_storage = TaskStorage(filename)
             task_storage.save_tasks(task_manager)
             print("Tasks saved successfully.")
         elif choice == "8":
             print("You selected Option 8.")
+            filename = input("Enter the filename to load tasks from (default is 'tasks.json'): ")
+            task_storage = TaskStorage(filename)
             task_storage.load_tasks(task_manager)
             print("Tasks loaded successfully.")
         elif choice == "9":

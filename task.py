@@ -1,9 +1,55 @@
+from datetime import datetime
+from enum import Enum
+
+
+def parse_date(date_str: str) -> datetime:
+    """
+    Parses a date string in the format "DD.MM.YYYY" into a datetime object.
+
+    Args:
+        date_str (str): Date string in the format "DD.MM.YYYY".
+
+    Returns:
+        datetime: Parsed datetime object.
+    """
+    try:
+        return datetime.strptime(date_str, "%Y-%m-%d")
+    except ValueError:
+        pass
+
+    try:
+        return datetime.strptime(date_str, "%d.%m.%Y")
+    except ValueError:
+        raise ValueError(f"Date '{date_str}' could not be parsed. Use YYYY-MM-DD or DD.MM.YYYY.")
+
+
+class Priority(Enum):
+    """
+    Enum for task priority levels.
+    """
+
+    LOW = "Low"
+    MEDIUM = "Medium"
+    HIGH = "High"
+
+    def __str__(self):
+        return self.value
+
+
 class Task:
     """
     Represents a to-do task.
     """
 
-    def __init__(self, title, description, due_date, completed, category, priority):
+    def __init__(
+        self,
+        title: str,
+        description: str,
+        due_date: datetime,
+        completed: bool,
+        category: str,
+        priority: str,
+    ):
         """
         Initializes a Task.
 
@@ -17,16 +63,25 @@ class Task:
         """
         self.title = title
         self.description = description
-        self.due_date = due_date
+        self.due_date = due_date if isinstance(due_date, datetime) else parse_date(due_date)
         self.completed = completed
         self.category = category
-        self.priority = priority
+        self.priority = Priority(priority) if isinstance(priority, str) else priority
 
     def __repr__(self):
         """
         Returns a string representation of the Task.
         """
-        return f"Task: title={self.title},\n description={self.description},\n due_date={self.due_date},\n completed={self.completed},\n category={self.category},\n priority={self.priority}\n)"
+        return (
+            f"Task(\n"
+            f"    title={self.title}\n"
+            f"    description={self.description}\n"
+            f"    due_date={self.due_date}\n"
+            f"    completed={self.completed}\n"
+            f"    category={self.category}\n"
+            f"    priority={self.priority}\n"
+            ")"
+        )
 
     def mark_completed(self):
         """
@@ -44,12 +99,14 @@ class Task:
         return {
             "title": self.title,
             "description": self.description,
-            "due_date": self.due_date,
+            "due_date": self.due_date.strftime("%Y-%m-%d"),
             "completed": self.completed,
             "category": self.category,
-            "priority": self.priority,
+            "priority": self.priority.value,
         }
 
+    # class method can be used but in storage.py we are using the constructor directly
+    # (it means we are creating an instance of Task directly)
     @classmethod
     def from_dict(cls, data):
         """
@@ -62,10 +119,12 @@ class Task:
         return cls(
             title=data["title"],
             description=data["description"],
-            due_date=data["due_date"],
+            due_date=parse_date(data["due_date"]),
             completed=data["completed"],
             category=data["category"],
-            priority=data["priority"],
+            priority=Priority(data["priority"])
+            if isinstance(data["priority"], str)
+            else data["priority"],
         )
 
 
@@ -95,7 +154,17 @@ class RecurringTask(Task):
         """
         Returns a string representation of the RecurringTask.
         """
-        return f"RecurringTask(title={self.title}, description={self.description}, due_date={self.due_date}, completed={self.completed}, category={self.category}, priority={self.priority}, recurrence_rule={self.recurrence_rule})"
+        return (
+            f"RecurringTask(\n"
+            f"    title={self.title}\n"
+            f"    description={self.description}\n"
+            f"    due_date={self.due_date}\n"
+            f"    completed={self.completed}\n"
+            f"    category={self.category}\n"
+            f"    priority={self.priority}\n"
+            f"    recurrence_rule={self.recurrence_rule}\n"
+            ")"
+        )
 
     def to_dict(self):
         """
@@ -117,9 +186,11 @@ class RecurringTask(Task):
         return cls(
             title=data["title"],
             description=data["description"],
-            due_date=data["due_date"],
+            due_date=parse_date(data["due_date"]),
             completed=data["completed"],
             category=data["category"],
-            priority=data["priority"],
+            priority=Priority(data["priority"])
+            if isinstance(data["priority"], str)
+            else data["priority"],
             recurrence_rule=data["recurrence_rule"],
         )

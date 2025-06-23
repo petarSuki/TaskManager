@@ -1,7 +1,6 @@
 import json
 
 from task import RecurringTask, Task
-from task_manager import TaskManager
 
 
 class TaskStorage:
@@ -35,8 +34,14 @@ class TaskStorage:
                         task = RecurringTask.from_dict(task_data)
                     else:
                         task = Task.from_dict(task_data)
+                        # task = Task(
+                        #     title=task_data["title"],
+                        #     description=task_data["description"],
+                        #     due_date=task_data["due_date"],
+                        #     completed=task_data["completed"],
+                        #     category=task_data.get("category"),
+                        #     priority=task_data.get("priority"),
+                        # )
                     task_manager.tasks.append(task)
         except FileNotFoundError:
-            print(
-                f"No existing task file found at {self.filename}. Starting with an empty task list."
-            )
+            print()
