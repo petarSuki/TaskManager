@@ -1,14 +1,16 @@
-from typing import Annotated, Union
+from typing import Annotated, List, Union
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from storage import TaskStorage
-from task import Priority, Task
+from task import AnyTask, Priority, RecurringTask, Task
 from task_manager import TaskManager
 
-app = FastAPI()
+app = FastAPI(
+    title="TaskManager API", description="A simple API to manage tasks.", version="1.0.0"
+)
 
 # CORS middleware to allow requests from any origin
 app.add_middleware(
@@ -19,30 +21,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-class TaskSchema(BaseModel):
-    title: str
-    description: str
-    due_date: str  # Assuming date is in 'YYYY-MM-DD' format
-    completed: bool = False
-    category: Union[str, None] = None
-    priority: Union[str, Priority] = "medium"  # Default priority
-
-
-# class RecurringTaskSchema(TaskSchema):
-#     title: str
-#     description: str
-#     due_date: str  # Assuming date is in 'YYYY-MM-DD' format
-#     completed: bool = False
-#     category: Union[str, None] = None
-#     priority: Union[str, Priority] = "medium"  # Default priority
-#     recurrence: str  # Recurrence pattern, e.g., "daily", "weekly", "monthly"
-
-# class TaskManagerSchema(BaseModel):
-#     tasks: list[TaskSchema]
-
-
 task_manager = TaskManager()
+
+
+class TaskCreate(BaseModel):
+    title: str
+    description: Union[str, None] = None
+    due_date: str  # Assuming date is in 'YYYY-MM-DD' format
+    category: Union[str, None] = None
+    priority: Priority = Priority.MEDIUM  # Default priority
+
+
+class RecurringTaskCreate(TaskCreate):
+    recurrence: str  # Recurrence pattern, e.g., "daily", "weekly", "monthly"
 
 
 @app.get("/")
@@ -50,7 +41,7 @@ def read_root():
     return {"message": "Welcome to the Task Manager API"}
 
 
-@app.get("/tasks")
+@app.get("/tasks", response_model=List[AnyTask])
 def get_tasks():
     """
     Retrieve all tasks.
@@ -58,40 +49,37 @@ def get_tasks():
     return task_manager.get_tasks()
 
 
-@app.post("/tasks")
-def create_task(
-    title: str,
-    description: str,
-    due_date: str,
-    completed: bool = False,
-    category: Annotated[str, None] = None,
-    priority: Annotated[str, Priority] = "medium",
-):
+@app.post("/tasks", response_model=Task)
+def create_task(task_create: TaskCreate):
     """
     Create a new task.
     """
-    t = Task(
-        title=title,
-        description=description,
-        due_date=due_date,
-        completed=completed,
-        category=category,
-        priority=Priority(priority) if isinstance(priority, str) else priority,
-    )
-    task_manager.add_task(t.title, t.description, t.due_date, t.completed, t.category, t.priority)
-    return task_manager.get_tasks()
+    task = Task(**task_create.model_dump())
+    task_manager.add_task(task)
+    return task
 
 
-@app.delete("/tasks/{title}")
+@app.post("/tasks/recurring", response_model=RecurringTask)
+def create_recurring_task(task_create: RecurringTaskCreate):
+    """
+    Create a new recurring task.
+    """
+    task = RecurringTask(**task_create.model_dump())
+    task_manager.add_task(task)
+    return task
+
+
+@app.delete("/tasks/{title}", status_code=204)
 def delete_task(title: str):
     """
     Delete a task by title.
     """
-    task_manager.remove_task(title)
+    if not task_manager.remove_task(title):
+        raise HTTPException(status_code=404, detail=f"Task '{title}' not found")
     return {"message": f"Task '{title}' removed successfully."}
 
 
-@app.get("/tasks/search")
+@app.get("/tasks/search", response_model=List[AnyTask])
 def search_tasks(keyword: str):
     """
     Search for tasks by keyword in title.
@@ -102,7 +90,7 @@ def search_tasks(keyword: str):
     return tasks
 
 
-@app.patch("/tasks/{title}/complete")
+@app.patch("/tasks/{title}/complete", response_model=AnyTask)
 def complete_task(title: str):
     """
     Mark a task as completed by title.
@@ -110,13 +98,12 @@ def complete_task(title: str):
     tasks = task_manager.get_task_by_title(title)
     if not tasks:
         raise HTTPException(status_code=404, detail=f"No task found with title '{title}'")
-
     task = tasks[0]
     task.mark_completed()
-    return {"message": f"Task '{task.title}' marked as completed."}
+    return task
 
 
-@app.patch("/tasks/{title}/incomplete")
+@app.patch("/tasks/{title}/incomplete", response_model=AnyTask)
 def incomplete_task(title: str):
     """
     Mark a task as incomplete by title.
@@ -130,7 +117,7 @@ def incomplete_task(title: str):
     return {"message": f"Task '{task.title}' marked as incomplete."}
 
 
-@app.get("/tasks/filter")
+@app.get("/tasks/filter", response_model=List[AnyTask])
 def filter_tasks(
     keyword: Union[str, None] = None,
     category: Union[str, None] = None,
@@ -142,9 +129,9 @@ def filter_tasks(
     if keyword:
         tasks = task_manager.get_task_by_title(keyword)
     elif category:
-        tasks = task_manager.get_tasks(lambda t: t.category == category)
+        tasks = task_manager.get_tasks(lambda t: t.category.lower() == category.lower())
     elif priority:
-        tasks = task_manager.get_tasks(lambda t: t.priority.value == priority)
+        tasks = task_manager.get_tasks(lambda t: t.priority.value.lower() == priority.lower())
     else:
         tasks = task_manager.get_tasks()
 
@@ -157,9 +144,8 @@ def filter_tasks(
 @app.post("/tasks/save")
 def save_task(path: Annotated[str, "Path to the task storage file"] = "test_fapi.json"):
     """Save tasks to storage."""
-    task_storage = TaskStorage(path)
-    task_storage.save_tasks(task_manager)
-    return {"message": "Tasks saved successfully."}
+    TaskStorage(path).save_tasks(task_manager)
+    return {"message": f"Tasks saved successfully to {path}"}
 
 
 @app.post("/tasks/load")
@@ -167,20 +153,8 @@ def load_task(path: Annotated[str, "Path to the task storage file"] = "test.json
     """
     Load tasks from storage.
     """
-    task_storage = TaskStorage(path)
-    task_storage.load_tasks(task_manager)
+    TaskStorage(path).load_tasks(task_manager)
     return {"message": "Tasks loaded successfully."}
-
-
-@app.get("/tasks/{title}")
-def get_task_by_title(title: str):
-    """
-    Retrieve a task by its title.
-    """
-    tasks = task_manager.get_task_by_title(title)
-    if not tasks:
-        raise HTTPException(status_code=404, detail=f"No task found with title '{title}'")
-    return tasks[0].to_dict()
 
 
 # @app.get("/tasks/recurring")

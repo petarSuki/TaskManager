@@ -1,5 +1,8 @@
 from datetime import datetime
 from enum import Enum
+from typing import Literal, Union
+
+from pydantic import BaseModel, field_validator
 
 
 def parse_date(date_str: str) -> datetime:
@@ -12,6 +15,8 @@ def parse_date(date_str: str) -> datetime:
     Returns:
         datetime: Parsed datetime object.
     """
+    if isinstance(date_str, str) and "T" in date_str:
+        date_str = date_str.split("T")[0]  # Handle ISO format with time
     try:
         return datetime.strptime(date_str, "%Y-%m-%d")
     except ValueError:
@@ -23,7 +28,7 @@ def parse_date(date_str: str) -> datetime:
         raise ValueError(f"Date '{date_str}' could not be parsed. Use YYYY-MM-DD or DD.MM.YYYY.")
 
 
-class Priority(Enum):
+class Priority(str, Enum):
     """
     Enum for task priority levels.
     """
@@ -32,56 +37,29 @@ class Priority(Enum):
     MEDIUM = "Medium"
     HIGH = "High"
 
-    def __str__(self):
-        return self.value
 
-
-class Task:
+class TaskBase(BaseModel):
     """
     Represents a to-do task.
     """
 
-    def __init__(
-        self,
-        title: str,
-        description: str,
-        due_date: datetime,
-        completed: bool,
-        category: str,
-        priority: str,
-    ):
-        """
-        Initializes a Task.
+    title: str
+    description: Union[str, None] = None
+    due_date: datetime
+    completed: bool = False
+    category: Union[str, None] = None
+    priority: Priority = Priority.MEDIUM
 
-        Args:
-            title (str): Title of the task.
-            description (str): Details about the task.
-            due_date (datetime): When the task is due.
-            completed (bool): Whether the task is completed.
-            category (str): Category of the task.
-            priority (str): Priority of the task.
+    @field_validator("due_date", mode="before")
+    @classmethod
+    def validate_due_date(cls, value):
         """
-        self.title = title
-        self.description = description
-        self.due_date = due_date if isinstance(due_date, datetime) else parse_date(due_date)
-        self.completed = completed
-        self.category = category
-        self.priority = Priority(priority) if isinstance(priority, str) else priority
-
-    def __repr__(self):
+        Validates the due date format.
+        Accepts both "YYYY-MM-DD" and "DD.MM.YYYY" formats.
         """
-        Returns a string representation of the Task.
-        """
-        return (
-            f"Task(\n"
-            f"    title={self.title}\n"
-            f"    description={self.description}\n"
-            f"    due_date={self.due_date}\n"
-            f"    completed={self.completed}\n"
-            f"    category={self.category}\n"
-            f"    priority={self.priority}\n"
-            ")"
-        )
+        if isinstance(value, str):
+            return parse_date(value)
+        return value
 
     def mark_completed(self):
         """
@@ -95,102 +73,22 @@ class Task:
         """
         self.completed = False
 
-    def to_dict(self):
-        return {
-            "title": self.title,
-            "description": self.description,
-            "due_date": self.due_date.strftime("%Y-%m-%d"),
-            "completed": self.completed,
-            "category": self.category,
-            "priority": self.priority.value,
-        }
 
-    # class method can be used but in storage.py we are using the constructor directly
-    # (it means we are creating an instance of Task directly)
-    @classmethod
-    def from_dict(cls, data):
-        """
-        Creates a Task instance from a dictionary.
-        Args:
-            data (dict): Dictionary containing task attributes.
-        Returns:
-            Task: An instance of Task.
-        """
-        return cls(
-            title=data["title"],
-            description=data["description"],
-            due_date=parse_date(data["due_date"]),
-            completed=data["completed"],
-            category=data["category"],
-            priority=Priority(data["priority"])
-            if isinstance(data["priority"], str)
-            else data["priority"],
-        )
+class Task(TaskBase):
+    """
+    A simple, non-recurring to-do task.
+    """
+
+    task_type: Literal["simple"] = "simple"
 
 
-class RecurringTask(Task):
-    """ "
+class RecurringTask(TaskBase):
+    """
     Represents a recurring to-do task.
     """
 
-    def __init__(
-        self, title, description, due_date, completed, category, priority, recurrence_rule
-    ):
-        """
-        Initializes a RecurringTask.
-        Args:
-            title (str): Title of the task.
-            description (str): Details about the task.
-            due_date (datetime): When the task is due.
-            completed (bool): Whether the task is completed.
-            category (str): Category of the task.
-            priority (str): Priority of the task.
-            recurrence_rule (str): Rule defining how often the task recurs.
-        """
-        super().__init__(title, description, due_date, completed, category, priority)
-        self.recurrence_rule = recurrence_rule
+    task_type: Literal["recurring"] = "recurring"
+    recurrence: str  # Recurrence pattern, e.g., "daily", "weekly", "monthly"
 
-    def __repr__(self):
-        """
-        Returns a string representation of the RecurringTask.
-        """
-        return (
-            f"RecurringTask(\n"
-            f"    title={self.title}\n"
-            f"    description={self.description}\n"
-            f"    due_date={self.due_date}\n"
-            f"    completed={self.completed}\n"
-            f"    category={self.category}\n"
-            f"    priority={self.priority}\n"
-            f"    recurrence_rule={self.recurrence_rule}\n"
-            ")"
-        )
 
-    def to_dict(self):
-        """
-        Converts the RecurringTask to a dictionary.
-        """
-        data = super().to_dict()
-        data["recurrence_rule"] = self.recurrence_rule
-        return data
-
-    @classmethod
-    def from_dict(cls, data):
-        """
-        Creates a RecurringTask instance from a dictionary.
-        Args:
-            data (dict): Dictionary containing task attributes.
-        Returns:
-            RecurringTask: An instance of RecurringTask.
-        """
-        return cls(
-            title=data["title"],
-            description=data["description"],
-            due_date=parse_date(data["due_date"]),
-            completed=data["completed"],
-            category=data["category"],
-            priority=Priority(data["priority"])
-            if isinstance(data["priority"], str)
-            else data["priority"],
-            recurrence_rule=data["recurrence_rule"],
-        )
+AnyTask = Union[Task, RecurringTask]

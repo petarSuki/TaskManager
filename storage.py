@@ -1,6 +1,12 @@
 import json
+from typing import List
 
-from task import RecurringTask, Task
+from pydantic import TypeAdapter
+
+from task import AnyTask
+from task_manager import TaskManager
+
+AnyTaskAdapter = TypeAdapter(List[AnyTask])
 
 
 class TaskStorage:
@@ -15,33 +21,24 @@ class TaskStorage:
         """
         self.filename = filename
 
-    def save_tasks(self, task_manager):
+    def save_tasks(self, task_manager: TaskManager):
         """
         Saves the tasks from the TaskManager to a JSON file.
         """
+        tasks_as_dict = [task.model_dump(mode="json") for task in task_manager.get_tasks()]
         with open(self.filename, "w") as file:
-            json.dump([task.to_dict() for task in task_manager.get_tasks()], file, indent=4)
+            json.dump(tasks_as_dict, file, indent=4)
 
-    def load_tasks(self, task_manager):
+    def load_tasks(self, task_manager: TaskManager):
         """
         Loads tasks from a JSON file into the TaskManager.
         """
         try:
             with open(self.filename, "r") as file:
                 tasks_data = json.load(file)
-                for task_data in tasks_data:
-                    if "recurrence" in task_data:
-                        task = RecurringTask.from_dict(task_data)
-                    else:
-                        task = Task.from_dict(task_data)
-                        # task = Task(
-                        #     title=task_data["title"],
-                        #     description=task_data["description"],
-                        #     due_date=task_data["due_date"],
-                        #     completed=task_data["completed"],
-                        #     category=task_data.get("category"),
-                        #     priority=task_data.get("priority"),
-                        # )
-                    task_manager.tasks.append(task)
+                loaded_tasks = AnyTaskAdapter.validate_python(tasks_data)
+                task_manager.tasks = loaded_tasks
         except FileNotFoundError:
-            print()
+            pass
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"Error loading tasks from {self.filename}: {e}")

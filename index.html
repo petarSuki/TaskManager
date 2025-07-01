@@ -5,119 +5,27 @@
     <title>TaskManager</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body {
-            background: #f5f6fa;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            max-width: 500px;
-            margin: 48px auto;
-            background: #fff;
-            border-radius: 18px;
-            box-shadow: 0 2px 24px rgba(44, 62, 80, 0.07);
-            padding: 36px 32px;
-        }
-        h1 {
-            text-align: center;
-            color: #2d3436;
-            letter-spacing: 1px;
-            font-weight: 600;
-            margin-bottom: 32px;
-        }
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        input, select {
-            padding: 10px;
-            border: 1px solid #dfe6e9;
-            border-radius: 8px;
-            font-size: 16px;
-        }
-        button {
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            background: #0984e3;
-            color: #fff;
-            font-weight: 600;
-            font-size: 17px;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: background 0.2s;
-        }
-        button:hover {
-            background: #074d8d;
-        }
-        .tasks {
-            margin-top: 36px;
-        }
-        .task {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #f1f2f6;
-            padding: 12px 16px;
-            margin-bottom: 12px;
-            border-radius: 8px;
-        }
-        .task.completed {
-            text-decoration: line-through;
-            color: #b2bec3;
-            background: #dfe6e9;
-        }
-        .task-details {
-            flex-grow: 1;
-        }
-        .task-actions button {
-            background: #d63031;
-            color: #fff;
-            margin-left: 8px;
-            padding: 6px 12px;
-            font-size: 13px;
-            border-radius: 6px;
-        }
-        .task-actions button.complete {
-            background: #00b894;
-        }
-
-        /* New Styles for Filter and Storage Controls */
-        .actions-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            padding: 15px;
-            background-color: #f1f2f6;
-            border-radius: 8px;
-            margin-top: 20px;
-            border: 1px solid #dfe6e9;
-        }
-        .filter-controls, .storage-controls {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .filter-controls input, .filter-controls select {
-             font-size: 14px;
-             padding: 8px;
-             margin: 0;
-        }
-        .actions-container button {
-            font-size: 14px;
-            padding: 8px 12px;
-            margin: 0;
-        }
-        .storage-controls button {
-            background-color: #636e72;
-        }
-        .storage-controls button:hover {
-            background-color: #2d3436;
-        }
+        body { background: #f5f6fa; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
+        .container { max-width: 500px; margin: 48px auto; background: #fff; border-radius: 18px; box-shadow: 0 2px 24px rgba(44, 62, 80, 0.07); padding: 36px 32px; }
+        h1 { text-align: center; color: #2d3436; letter-spacing: 1px; font-weight: 600; margin-bottom: 32px; }
+        form { display: flex; flex-direction: column; gap: 10px; }
+        input, select { padding: 10px; border: 1px solid #dfe6e9; border-radius: 8px; font-size: 16px; }
+        button { padding: 12px; border: none; border-radius: 8px; background: #0984e3; color: #fff; font-weight: 600; font-size: 17px; cursor: pointer; margin-top: 10px; transition: background 0.2s; }
+        button:hover { background: #074d8d; }
+        .tasks { margin-top: 36px; }
+        .task { display: flex; justify-content: space-between; align-items: center; background: #f1f2f6; padding: 12px 16px; margin-bottom: 12px; border-radius: 8px; }
+        .task.completed { text-decoration: line-through; color: #b2bec3; background: #dfe6e9; }
+        .task-details { flex-grow: 1; }
+        .task-actions button { background: #d63031; color: #fff; margin-left: 8px; padding: 6px 12px; font-size: 13px; border-radius: 6px; }
+        .task-actions button.complete { background: #00b894; }
+        .actions-container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; padding: 15px; background-color: #f1f2f6; border-radius: 8px; margin-top: 20px; border: 1px solid #dfe6e9; }
+        .filter-controls, .storage-controls { display: flex; align-items: center; gap: 8px; }
+        .filter-controls input, .filter-controls select { font-size: 14px; padding: 8px; margin: 0; }
+        .actions-container button { font-size: 14px; padding: 8px 12px; margin: 0; }
+        .storage-controls button { background-color: #636e72; }
+        .storage-controls button:hover { background-color: #2d3436; }
+        .recurring-controls { display: flex; align-items: center; gap: 10px; padding: 10px 0; }
+        #recurrence-rule-container { display: none; flex-grow: 1; }
     </style>
 </head>
 <body>
@@ -128,24 +36,33 @@
         <input type="text" id="description" placeholder="Description">
         <input type="date" id="due_date" required>
         <input list="category-options" id="category" placeholder="Category (pick or type)">
-            <datalist id="category-options">
-                <option value="Work">
-                <option value="Personal">
-                <option value="Shopping">
-                <option value="Other">
-            </datalist>
+        <datalist id="category-options">
+            <option value="Work"></option>
+            <option value="Personal"></option>
+            <option value="Shopping"></option>
+            <option value="Other"></option>
+        </datalist>
         <select id="priority">
             <option value="Medium">Medium Priority</option>
             <option value="High">High Priority</option>
             <option value="Low">Low Priority</option>
         </select>
+
+        <div class="recurring-controls">
+            <input type="checkbox" id="is-recurring" style="width: auto;">
+            <label for="is-recurring">Is this a recurring task?</label>
+        </div>
+        <div id="recurrence-rule-container">
+            <input type="text" id="recurrence" placeholder="e.g., 'Daily', 'Weekly on Monday'">
+        </div>
+
         <button type="submit">Add Task</button>
     </form>
 
     <div class="actions-container">
         <div class="filter-controls">
             <select id="filter-type">
-                <option value="keyword">Search by Title</option>
+                <option value="title">Search by Title</option>
                 <option value="category">Filter by Category</option>
                 <option value="priority">Filter by Priority</option>
             </select>
@@ -159,145 +76,124 @@
         </div>
     </div>
 
-
-    <div class="tasks" id="task-list">
-        </div>
+    <div class="tasks" id="task-list"></div>
 </div>
+
 <script>
-    const API_URL = 'http://localhost:8000/tasks'; // Your FastAPI backend URL
-    const STORAGE_FILE = 'tasks.json'; // The file where tasks will be saved/loaded
+    const API_BASE_URL = 'http://localhost:8000';
+    const STORAGE_FILE = 'tasks.json';
     const taskList = document.getElementById('task-list');
     const form = document.getElementById('task-form');
+    const isRecurringCheckbox = document.getElementById('is-recurring');
+    const recurrenceRuleContainer = document.getElementById('recurrence-rule-container');
+    // FIX #1: Correctly get the element with id="recurrence"
+    const recurrenceInput = document.getElementById('recurrence');
+
     let tasks = [];
 
-    /**
-     * Fetches all tasks from the backend and re-renders the list.
-     */
-    async function getAndRenderTasks(url = API_URL) {
+    async function getAndRenderTasks(url = `${API_BASE_URL}/tasks`) {
         try {
             const res = await fetch(url);
-            if (!res.ok) {
-                // Handle cases like 404 Not Found from filter
-                if (res.status === 404) {
-                    tasks = [];
-                    taskList.innerHTML = `<p style="text-align:center;">No tasks found matching your criteria.</p>`;
-                } else {
-                    throw new Error(`Server responded with status: ${res.status}`);
-                }
-            } else {
-                tasks = await res.json();
-                renderTasks();
-            }
+            tasks = res.ok ? await res.json() : [];
+            renderTasks();
         } catch (error) {
             console.error("Error fetching tasks:", error);
-            taskList.innerHTML = '<p style="color:red;text-align:center;">Failed to load tasks. Is the server running?</p>';
+            taskList.innerHTML = '<p style="color:red;text-align:center;">Failed to load tasks.</p>';
         }
     }
 
-
-    /**
-     * Submits a new task to the backend.
-     * The FastAPI endpoint expects form data, so we use URLSearchParams.
-     */
     async function addTask(e) {
         e.preventDefault();
-        const params = new URLSearchParams({
+        const isRecurring = isRecurringCheckbox.checked;
+        let endpoint = `${API_BASE_URL}/tasks`;
+
+        const taskData = {
             title: form.title.value,
             description: form.description.value,
             due_date: form.due_date.value,
             category: form.category.value,
             priority: form.priority.value,
-            completed: false
-        });
+        };
 
-        await fetch(`${API_URL}?${params.toString()}`, {
-            method: "POST"
-        });
-        getAndRenderTasks();
-        form.reset();
-    }
-
-    /**
-     * Deletes a task by its title.
-     */
-    async function deleteTask(title) {
-        // We need to encode the title in case it contains special characters
-        await fetch(`${API_URL}/${encodeURIComponent(title)}`, { method: "DELETE" });
-        getAndRenderTasks();
-    }
-
-    /**
-     * Toggles the completion status of a task by its title.
-     */
-    async function toggleTaskCompletion(title, isCompleted) {
-        const endpoint = isCompleted ? 'incomplete' : 'complete';
-        await fetch(`${API_URL}/${encodeURIComponent(title)}/${endpoint}`, {
-            method: "PATCH"
-        });
-        getAndRenderTasks();
-    }
-
-    /**
-     * Saves the current tasks to a local file on the server.
-     * This function is called when the user clicks the "Save" button.
-     */
-    async function saveTasks() {
-        if (!confirm("Are you sure you want to save the current tasks to the server?")) return;
-        try {
-            const res = await fetch(`${API_URL}/save?path=${STORAGE_FILE}`, { method: "POST" });
-            const result = await res.json();
-            alert(result.message);
-        } catch (error) {
-            console.error("Error saving tasks:", error);
-            alert("Failed to save tasks.");
-        }
-    }
-
-    /**
-     * Loads tasks from a local file.
-     * This function is called when the page loads to populate the task list.
-     */
-    async function loadTasks() {
-        if (!confirm("Are you sure you want to load tasks from the server? This will replace all current tasks.")) return;
-        try {
-            const res = await fetch(`${API_URL}/load?path=${STORAGE_FILE}`, { method: "POST" });
-            const result = await res.json();
-            alert(result.message);
-            if (res.ok) {
-                getAndRenderTasks(); // Refresh the UI with the loaded tasks
+        if (isRecurring) {
+            endpoint = `${API_BASE_URL}/tasks/recurring`;
+            const rule = recurrenceInput.value.trim();
+            if (!rule) {
+                alert('Please provide a recurrence rule for the recurring task.');
+                return;
             }
+            // FIX #2: Use the correct key 'recurrence' (single 'c')
+            taskData.recurrence = rule;
+        }
+
+        try {
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(taskData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                alert(`Error from server: ${errorData.detail[0]?.msg || 'Could not add task.'}`);
+                return;
+            }
+            getAndRenderTasks();
+            form.reset();
+            isRecurringCheckbox.checked = false;
+            recurrenceRuleContainer.style.display = 'none';
         } catch (error) {
-            console.error("Error loading tasks:", error);
-            alert("Failed to load tasks.");
+            console.error("Error adding task:", error);
         }
     }
 
-    /**
-     * Applies a filter to the task list based on the selected criteria.
-     * The filter can be by keyword, category, priority, or due date.
-     */
+    async function deleteTask(title) {
+        if (!confirm(`Remove task: "${title}"?`)) return;
+        await fetch(`${API_BASE_URL}/tasks/${encodeURIComponent(title)}`, { method: "DELETE" });
+        getAndRenderTasks();
+    }
+
+    async function toggleTaskCompletion(title, isCompleted) {
+        // This endpoint in your main.py returns a Task, but your other one returns a message.
+        // For consistency, we just refetch all tasks.
+        const endpoint = isCompleted ? 'incomplete' : 'complete';
+        await fetch(`${API_BASE_URL}/tasks/${encodeURIComponent(title)}/${endpoint}`, { method: "PATCH" });
+        getAndRenderTasks();
+    }
+
+    async function saveTasks() {
+        if (!confirm("Save current tasks to the server?")) return;
+        const res = await fetch(`${API_BASE_URL}/tasks/save`, { method: "POST" });
+        alert((await res.json()).message);
+    }
+
+    async function loadTasks() {
+        if (!confirm("Load tasks from server? This replaces current tasks.")) return;
+        await fetch(`${API_BASE_URL}/tasks/load`, { method: "POST" });
+        getAndRenderTasks();
+    }
+
     function applyFilter() {
         const filterType = document.getElementById('filter-type').value;
-        const filterValue = document.getElementById('filter-value').value;
+        const filterValue = document.getElementById('filter-value').value.trim();
+
         if (!filterValue) {
-            alert("Please enter a value to filter by.");
+            getAndRenderTasks();
             return;
         }
 
-        let filterUrl = '';
-        if (filterType === 'keyword') {
-            filterUrl = `${API_URL}/search?keyword=${encodeURIComponent(filterValue)}`;
+        let url;
+        if (filterType === 'title') {
+            url = `${API_BASE_URL}/tasks/search?keyword=${encodeURIComponent(filterValue)}`;
         } else {
-            filterUrl = `${API_URL}/filter?${filterType}=${encodeURIComponent(filterValue)}`;
+            // This now correctly calls the /tasks/filter endpoint
+            const params = new URLSearchParams({ [filterType]: filterValue });
+            url = `${API_BASE_URL}/tasks/filter?${params.toString()}`;
         }
-
-        getAndRenderTasks(filterUrl);
+        getAndRenderTasks(url);
     }
 
-    /**
-     * Renders the list of tasks to the DOM.
-     * Each task's action buttons are wired up to use the task's title.
-     */
+
     function renderTasks() {
         taskList.innerHTML = '';
         if (!tasks || tasks.length === 0) {
@@ -308,56 +204,44 @@
         tasks.forEach(task => {
             const taskDiv = document.createElement('div');
             taskDiv.className = 'task' + (task.completed ? ' completed' : '');
+            const dueDate = new Date(task.due_date).toLocaleDateString('en-GB');
 
-            // Format the due date for display
-            const options = {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            };
-            // Convert the date to a more readable format (DD/MM/YYYY)
-            // Using 'az-Cyrl-AZ' locale for DD/MM/YYYY format
-            const dueDate = new Date(task.due_date).toLocaleDateString('az-Cyrl-AZ', options).replace(/\//g, '.');
+            // FIX #3: Use the correct property 'recurrence' to display the rule
+            const recurrenceInfo = (task.task_type === 'recurring' && task.recurrence)
+                ? ` | 🔁 Recurrence: ${task.recurrence}`
+                : '';
 
             taskDiv.innerHTML = `
                 <div class="task-details">
                     <strong>${task.title}</strong>
                     <div style="font-size:13px;">${task.description || ''}</div>
                     <div style="font-size:12px;color:#636e72;">
-                        Due: ${dueDate}
-                        ${task.category ? '| ' + task.category : ''}
-                        ${task.priority ? '| Priority: ' + task.priority : ''}
+                        Due: ${dueDate} | Priority: ${task.priority}
+                        ${task.category ? '| ' + task.category : ''}${recurrenceInfo}
                     </div>
                 </div>
                 <div class="task-actions">
                     <button class="complete">${task.completed ? 'Undo' : 'Complete'}</button>
                     <button class="remove">Remove</button>
-                </div>
-            `;
-            // Attach event listeners using the task's title as the identifier
-            taskDiv.querySelector('.complete').onclick = () => {
-                toggleTaskCompletion(task.title, task.completed);
-            };
-            taskDiv.querySelector('.remove').onclick = () => {
-                // Add a confirmation before deleting
-                if (confirm(`Are you sure you want to remove the task: "${task.title}"?`)) {
-                    deleteTask(task.title);
-                }
-            };
+                </div>`;
+
+            taskDiv.querySelector('.complete').onclick = () => toggleTaskCompletion(task.title, task.completed);
+            taskDiv.querySelector('.remove').onclick = () => deleteTask(task.title);
             taskList.appendChild(taskDiv);
         });
     }
 
-    // Assign the event listener for the form submission
+    isRecurringCheckbox.addEventListener('change', () => {
+        recurrenceRuleContainer.style.display = isRecurringCheckbox.checked ? 'block' : 'none';
+    });
+
     form.onsubmit = addTask;
     document.getElementById('filter-btn').onclick = applyFilter;
-    document.getElementById('clear-filter-btn').onclick = () => getAndRenderTasks(); // Clears filter
+    document.getElementById('clear-filter-btn').onclick = () => getAndRenderTasks();
     document.getElementById('save-btn').onclick = saveTasks;
     document.getElementById('load-btn').onclick = loadTasks;
 
-    // Initial fetch of tasks when the page loads
     getAndRenderTasks();
-
 </script>
 </body>
 </html>

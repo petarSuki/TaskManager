@@ -1,4 +1,6 @@
-from task import Task
+from typing import List
+
+from task import AnyTask
 
 
 class TaskManager:
@@ -11,25 +13,24 @@ class TaskManager:
         """
         Initializes the TaskManager with an empty task list.
         """
-        self.tasks = []
+        self.tasks: List[AnyTask] = []
 
-    def add_task(
-        self, title, description, due_date, completed=False, category=None, priority=None
-    ):
+    def add_task(self, task: AnyTask):
         """
         Adds a new task to the task list.
         """
-        task = Task(title, description, due_date, completed, category, priority)
         self.tasks.append(task)
 
-    def remove_task(self, title):
+    def remove_task(self, title: str) -> bool:
         """
         Removes a task from the task list by title.
         If multiple tasks have the same title, all will be removed.
         """
+        inital_length = len(self.tasks)
         self.tasks = [task for task in self.tasks if task.title != title]
+        return len(self.tasks) < inital_length
 
-    def get_tasks(self, filter=None):
+    def get_tasks(self, filter=None) -> List[AnyTask]:
         """
         Retrieves all tasks, optionally filtered by a given function.
         If no filter is provided, returns all tasks.
@@ -38,7 +39,7 @@ class TaskManager:
             return self.tasks
         return [task for task in self.tasks if filter(task)]
 
-    def get_task_by_title(self, keyword):
+    def get_task_by_title(self, keyword: str) -> List[AnyTask]:
         """
         Retrieves tasks that contain a specific keyword in their title.
         """
